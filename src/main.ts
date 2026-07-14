@@ -324,7 +324,7 @@ if (demo === "launch") {
   for (let i = 0; i < 300; i++) step(state, IDLE_INPUT, DT);
 } else if (demo === "boss") {
   state.player.x = 160; state.player.y = 46.5; state.camX = 163; state.camY = 48;
-  for (let i = 0; i < 500; i++) step(state, { ...IDLE_INPUT, right: state.player.x < 163 }, DT);
+  for (let i = 0; i < 700; i++) step(state, { ...IDLE_INPUT, right: state.player.x < 172 }, DT);
   step(state, { ...IDLE_INPUT, aimX: state.boss.x, aimY: state.boss.y, shoot: true, shootHeld: true }, DT);
   for (let i = 0; i < 20; i++) step(state, { ...IDLE_INPUT, aimX: state.boss.x, aimY: state.boss.y, shootHeld: true }, DT);
   state.player.aimActive = 1;
