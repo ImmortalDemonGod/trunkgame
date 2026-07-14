@@ -1010,7 +1010,7 @@ function updateBoss(s: State, input: Input, dt: number) {
         boss.phase = "intro"; boss.timer = 0;
         s.zoomTarget = 0.72;
         boss.vy = 13; boss.vx = -6;
-        s.toast = { text: "!!!", timer: 1.5 };
+        s.toast = { text: "BIG GRUMP wakes up!!", timer: 2 };
         s.shake = 0.4;
       }
       return;

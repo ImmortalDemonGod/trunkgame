@@ -746,6 +746,10 @@ function drawBoss(ctx: CanvasRenderingContext2D, s: State) {
     roundRect(ctx, a.x - 60, a.y - h / 2 - 22, 120, 10, 5); ctx.fill();
     ctx.fillStyle = "#e0524f";
     roundRect(ctx, a.x - 58, a.y - h / 2 - 20, 116 * (boss.hp / boss.maxHp), 6, 3); ctx.fill();
+    ctx.fillStyle = "rgba(255,233,201,0.9)";
+    ctx.font = "700 11px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("BIG GRUMP", a.x, a.y - h / 2 - 28);
   }
 }
 
@@ -811,6 +815,9 @@ function drawHud(ctx: CanvasRenderingContext2D, s: State) {
       ctx.fillStyle = s.runTime <= best ? "#ffd24a" : "#b9a6d9";
       ctx.fillText(s.runTime <= best ? "NEW BEST TIME!" : `best ${fmtTime(best)}`, VIEW_W / 2, VIEW_H / 2 + 76);
     }
+    ctx.font = "500 12px system-ui, sans-serif";
+    ctx.fillStyle = "rgba(185,166,217,0.7)";
+    ctx.fillText("TRUNK! — a from-scratch rebuild of Team Ratateam's ElephantGame", VIEW_W / 2, VIEW_H - 24);
     ctx.font = "600 16px system-ui, sans-serif";
     ctx.fillText("press R to play again", VIEW_W / 2, VIEW_H / 2 + 48);
   }
