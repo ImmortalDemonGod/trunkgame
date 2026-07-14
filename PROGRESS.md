@@ -42,6 +42,11 @@ attract mode + fresh-start-on-click, GRUMP MODE (21/21 tests).
 - Maybe: attract-mode bot on title screen; GIF capture; birds in sky; more
   dodger placements; NG+ remix. All optional — game is complete.
 
+## Difficulty notes
+- Clumsy-bot proxy stalls at tower B face (oscillates, 0 deaths, full hp) —
+  bot artifact: it never aims a clean vertical when pinned. Humans have Space
+  (shot-at-feet). Step 3 widened to 4.2 anyway; honest clear now ends ~78hp.
+
 ## Warnings for future-me
 - User's Firefox is open: always `-no-remote --profile` for headless shots.
 - Zombie firefox processes accumulate → `pkill -f 'firefox.*ffprof'` after runs.

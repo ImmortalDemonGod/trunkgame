@@ -209,7 +209,7 @@ export function makeLevel(grump = false): State {
   wall(119, -3, 7, 3);   // tower C
   plat(95.5, 2.4, 3, true, "metal");   // step 1: launch straight up from the ground
   plat(97.5, 4.6, 3.5, true, "metal"); // step 2: single clean launch from step 1; chains are speed-tech, not a wall
-  plat(105.5, 7.8, 3, true, "metal");  // step 3: comfortable launch from tower A top
+  plat(105.5, 7.8, 4.2, true, "metal"); // step 3: runs almost to tower B's face — hold-right launches self-correct
   plat(114.5, 11.2, 3, true, "metal"); // bridge toward the drop to tower C
   plat(116.6, 2.1, 2, true, "metal");  // canyon exit ledge: fall recovery is a two-hop staircase
   ground(126, 12, 0, 3);
