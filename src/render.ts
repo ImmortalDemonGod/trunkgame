@@ -780,8 +780,17 @@ function drawBoss(ctx: CanvasRenderingContext2D, s: State) {
   }
 }
 
+const CONTRIBUTORS = ["Team Ratateam", "Mhanna112", "ImmortalDemonGod", "MoltenNaut", "unqbic", "ristyboilts"];
+
 function drawHud(ctx: CanvasRenderingContext2D, s: State) {
   const p = s.player;
+  // contributor credits, bottom-left, always on during play
+  ctx.textAlign = "left";
+  for (let i = 0; i < CONTRIBUTORS.length; i++) {
+    ctx.font = i === 0 ? "700 11px system-ui, sans-serif" : "500 11px system-ui, sans-serif";
+    ctx.fillStyle = i === 0 ? "rgba(255,210,74,0.55)" : "rgba(233,217,239,0.42)";
+    ctx.fillText(CONTRIBUTORS[i], 14, VIEW_H - 10 - (CONTRIBUTORS.length - 1 - i) * 15);
+  }
   // health bar
   ctx.fillStyle = "rgba(20,12,30,0.6)";
   roundRect(ctx, 16, 16, 220, 26, 13); ctx.fill();
