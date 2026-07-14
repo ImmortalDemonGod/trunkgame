@@ -411,3 +411,19 @@ test("grump mode: harder boss and thinner health, still killable", () => {
   }
   expect(s.boss.hp).toBe(0);
 });
+
+test("boss fight death: respawn is not camped — boss resets to his ledge", () => {
+  const s = makeLevel();
+  teleport(s, 174, 46.5);
+  sim(s, {}, 4); // fight underway
+  s.boss.x = 168; // boss on top of the checkpoint area
+  s.player.hp = 1;
+  damage: {
+    s.player.x = s.boss.x; // force contact
+    sim(s, {}, 1.5);
+  }
+  expect(s.stats.deaths).toBeGreaterThanOrEqual(1);
+  sim(s, {}, 1); // respawned
+  expect(s.boss.x).toBeGreaterThan(175); // backed off
+  expect(s.player.dead).toBe(false);
+});

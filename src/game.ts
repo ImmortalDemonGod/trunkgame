@@ -505,6 +505,12 @@ function respawn(s: State) {
   const p = s.player;
   p.dead = false; p.hp = p.maxHp;
   s.tether = null;
+  // no respawn camping: an active boss backs off to his ledge and takes a breath
+  if (s.boss.phase === "chase" || s.boss.phase === "windup" || s.boss.phase === "leap") {
+    s.boss.phase = "chase";
+    s.boss.x = 179; s.boss.vx = 0; s.boss.vy = 0; s.boss.y = 45.4 + s.boss.h / 2;
+    s.boss.attackCooldown = 1.5; s.boss.leapCooldown = 3; s.boss.spitCooldown = 2.5;
+  }
   p.x = s.checkpoint.x; p.y = s.checkpoint.y;
   p.vx = 0; p.vy = 0; p.iframes = 1.5; p.inCart = false;
   s.cart.riding = false;
