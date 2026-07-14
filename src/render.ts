@@ -467,15 +467,16 @@ function drawDodger(ctx: CanvasRenderingContext2D, s: State, x: number, y: numbe
   const sc = BASE_SCALE * s.zoom;
   const a = worldToScreen(s, x, y);
   const r = 0.55 * sc;
+  const look = Math.max(-2.5, Math.min(2.5, (s.player.x - x) * 0.6));
   ctx.fillStyle = flash ? "#fff" : "#79c96a";
   ctx.beginPath(); ctx.ellipse(a.x, a.y, r, r * 0.85, 0, 0, 7); ctx.fill();
   // belly
   ctx.fillStyle = flash ? "#eee" : "#cfe8b8";
   ctx.beginPath(); ctx.ellipse(a.x, a.y + r * 0.25, r * 0.6, r * 0.45, 0, 0, 7); ctx.fill();
-  // eyes
+  // eyes track the player
   ctx.fillStyle = "#222";
-  ctx.beginPath(); ctx.arc(a.x - r * 0.3, a.y - r * 0.35, 3.5, 0, 7); ctx.fill();
-  ctx.beginPath(); ctx.arc(a.x + r * 0.3, a.y - r * 0.35, 3.5, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(a.x - r * 0.3 + look, a.y - r * 0.35, 3.5, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(a.x + r * 0.3 + look, a.y - r * 0.35, 3.5, 0, 7); ctx.fill();
   // hover wobble feet
   ctx.strokeStyle = "#5a9c4c"; ctx.lineWidth = 3;
   const k = Math.sin(s.t * 6) * 4;
@@ -702,9 +703,15 @@ function drawHud(ctx: CanvasRenderingContext2D, s: State) {
     ctx.fillStyle = "rgba(20,12,30,0.55)";
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
     ctx.textAlign = "center";
+    const allPeanuts = s.stats.peanuts === s.peanuts.length;
     ctx.fillStyle = "#ffd24a";
     ctx.font = "900 64px system-ui, sans-serif";
-    ctx.fillText("YOU WIN!", VIEW_W / 2, VIEW_H / 2 - 30);
+    ctx.fillText(allPeanuts ? "PERFECT WIN!" : "YOU WIN!", VIEW_W / 2, VIEW_H / 2 - 30);
+    if (allPeanuts) {
+      ctx.font = "700 20px system-ui, sans-serif";
+      ctx.fillStyle = "#e8b04a";
+      ctx.fillText("every peanut found — the trunk is satisfied", VIEW_W / 2, VIEW_H / 2 - 90);
+    }
     ctx.fillStyle = "#ffe9c9";
     ctx.font = "600 20px system-ui, sans-serif";
     const st = s.stats;

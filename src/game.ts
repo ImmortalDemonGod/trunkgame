@@ -1051,6 +1051,8 @@ function updateBoss(s: State, input: Input, dt: number) {
           });
         }
         s.toast = { text: "peanut volley!", timer: 0.9 };
+        spawnParticles(s, boss.x + (Math.sign(p.x - boss.x) || boss.faceDir) * 1.4, boss.y + 0.4, 8, "spark", 10);
+        s.shake = Math.max(s.shake, 0.2);
       }
       boss.x += (chaseV + boss.vx) * dt;
       // gravity/floor
