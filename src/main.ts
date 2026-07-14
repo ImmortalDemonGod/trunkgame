@@ -1,6 +1,6 @@
 // TRUNK! — browser shell: input, fixed-step loop, audio, trajectory preview.
 import { makeLevel, step, DT, IDLE_INPUT, previewPath, type State, type Input } from "./game";
-import { render, screenToWorld, getTrunkTip, worldToScreen, VIEW_W, VIEW_H } from "./render";
+import { render, screenToWorld, getTrunkTip, worldToScreen, VIEW_W, VIEW_H, recordBest } from "./render";
 
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d")!;
@@ -160,7 +160,7 @@ function audioTick(s: State) {
   if (s.stats.deaths > prev.deaths) audio.death();
   else if (s.player.hp < prev.hp) audio.hurt();
   if (s.boss.hp < prev.bossHp) audio.bossHit();
-  if (s.won && !prev.won) audio.win();
+  if (s.won && !prev.won) { audio.win(); recordBest(s.runTime); }
   const hearts = s.hearts.filter(h => h.taken).length;
   if (hearts > prev.hearts) audio.pickup();
   if (s.stats.peanuts > prev.peanuts) audio.peanut();

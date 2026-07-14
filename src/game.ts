@@ -129,6 +129,8 @@ export interface Player {
 
 export interface State {
   t: number;
+  runTime: number;
+  runStarted: boolean;
   player: Player;
   bullets: Bullet[];
   particles: Particle[];
@@ -375,6 +377,7 @@ export function makeLevel(): State {
     zoom: 1, zoomTarget: 1, paused: false, checkpoints, checkpoint: { x: 2.5, y: 1.5 },
     deathY: -14, camX: player.x, camY: player.y + 1.5, shake: 0, hitStop: 0,
     rngState: 1337, won: false, wonTimer: 0, bossArenaX: 168.2,
+    runTime: 0, runStarted: false,
     stats: { shots: 0, bounces: 0, launches: 0, deaths: 0, damageTaken: 0, peanuts: 0 },
     toast: { text: "", timer: 0 },
   };
@@ -525,6 +528,10 @@ export function step(s: State, input: Input, dt: number): void {
       });
     }
   }
+
+  // run timer: first input starts it; winning freezes it
+  if (!s.runStarted && (input.left || input.right || input.shoot || input.interact)) s.runStarted = true;
+  if (s.runStarted && !s.won) s.runTime += dt;
 
   // toast decay
   if (s.toast.timer > 0) s.toast.timer -= dt;

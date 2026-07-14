@@ -711,6 +711,14 @@ function drawHud(ctx: CanvasRenderingContext2D, s: State) {
   ctx.font = "700 13px system-ui, sans-serif";
   ctx.textAlign = "left";
   ctx.fillText(`${Math.ceil(p.hp)}`, 44, 33);
+  // run timer
+  if (s.runStarted) {
+    ctx.fillStyle = "rgba(255,233,201,0.85)";
+    ctx.font = "700 14px system-ui, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(fmtTime(s.runTime), VIEW_W - 20, 33);
+    ctx.textAlign = "left";
+  }
   // peanut tally
   ctx.fillStyle = "#e8b04a";
   ctx.beginPath(); ctx.ellipse(258, 29, 8, 5.6, 0.4, 0, 7); ctx.fill();
@@ -746,7 +754,13 @@ function drawHud(ctx: CanvasRenderingContext2D, s: State) {
     ctx.fillStyle = "#ffe9c9";
     ctx.font = "600 20px system-ui, sans-serif";
     const st = s.stats;
-    ctx.fillText(`shots ${st.shots} · bounces ${st.bounces} · launches ${st.launches} · deaths ${st.deaths} · peanuts ${st.peanuts}/${s.peanuts.length}`, VIEW_W / 2, VIEW_H / 2 + 14);
+    ctx.fillText(`${fmtTime(s.runTime)} · shots ${st.shots} · launches ${st.launches} · deaths ${st.deaths} · peanuts ${st.peanuts}/${s.peanuts.length}`, VIEW_W / 2, VIEW_H / 2 + 14);
+    const best = bestTime();
+    if (best !== null) {
+      ctx.font = "600 15px system-ui, sans-serif";
+      ctx.fillStyle = s.runTime <= best ? "#ffd24a" : "#b9a6d9";
+      ctx.fillText(s.runTime <= best ? "NEW BEST TIME!" : `best ${fmtTime(best)}`, VIEW_W / 2, VIEW_H / 2 + 76);
+    }
     ctx.font = "600 16px system-ui, sans-serif";
     ctx.fillText("press R to play again", VIEW_W / 2, VIEW_H / 2 + 48);
   }
@@ -777,6 +791,26 @@ function drawHeartIcon(ctx: CanvasRenderingContext2D, x: number, y: number, r: n
   ctx.bezierCurveTo(x - r * 1.2, y - r * 0.4, x - r * 0.5, y - r, x, y - r * 0.3);
   ctx.bezierCurveTo(x + r * 0.5, y - r, x + r * 1.2, y - r * 0.4, x, y + r * 0.6);
   ctx.fill();
+}
+
+function fmtTime(t: number): string {
+  const m = Math.floor(t / 60), sec = t - m * 60;
+  return `${m}:${sec.toFixed(1).padStart(4, "0")}`;
+}
+
+let cachedBest: number | null | undefined;
+function bestTime(): number | null {
+  if (cachedBest !== undefined) return cachedBest;
+  try { const v = localStorage.getItem("trunk-best"); cachedBest = v ? Number(v) : null; }
+  catch { cachedBest = null; }
+  return cachedBest;
+}
+export function recordBest(t: number) {
+  const b = bestTime();
+  if (b === null || t < b) {
+    try { localStorage.setItem("trunk-best", String(t)); } catch {}
+    cachedBest = t;
+  }
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
