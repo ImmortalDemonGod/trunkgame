@@ -141,8 +141,7 @@ function frame(now: number) {
   audioTick(state);
 
   try {
-    render(ctx, state, mouseWorld);
-    drawAmmoAndPreview(mouseWorld);
+    paintOnce(mouseWorld);
   } catch (e) {
     ctx.fillStyle = "#300";
     ctx.fillRect(0, 0, 960, 540);
@@ -155,6 +154,11 @@ for (let i = 0; i < 60; i++) step(state, IDLE_INPUT, DT); // settle spawn
 render(ctx, state, { x: state.player.x + 3, y: state.player.y + 1 });
 
 requestAnimationFrame(frame);
+}
+
+function paintOnce(mouseWorld: { x: number; y: number }) {
+  render(ctx, state, mouseWorld);
+  drawAmmoAndPreview(mouseWorld);
 }
 
 function drawAmmoAndPreview(mouseWorld: { x: number; y: number }) {
@@ -203,8 +207,26 @@ window.__step = (inp, seconds) => {
   render(ctx, state, { x: state.player.aimX, y: state.player.aimY });
 };
 
+// canned demo states for screenshot review
+const demo = qp.get("demo");
+if (demo === "launch") {
+  for (let i = 0; i < 140; i++) step(state, { ...IDLE_INPUT, right: true }, DT);
+  step(state, { ...IDLE_INPUT, aimX: state.player.x, aimY: state.player.y - 2, shoot: true, shootHeld: true }, DT);
+  for (let i = 0; i < 35; i++) step(state, { ...IDLE_INPUT, right: true, shootHeld: true, aimX: state.player.x + 5, aimY: state.player.y + 2 }, DT);
+  state.player.aimActive = 1;
+} else if (demo === "win") {
+  state.won = true; state.player.x = 168; state.player.y = 46.5; state.camX = 168; state.camY = 48;
+  for (let i = 0; i < 300; i++) step(state, IDLE_INPUT, DT);
+} else if (demo === "boss") {
+  state.player.x = 160; state.player.y = 46.5; state.camX = 163; state.camY = 48;
+  for (let i = 0; i < 500; i++) step(state, { ...IDLE_INPUT, right: state.player.x < 163 }, DT);
+  step(state, { ...IDLE_INPUT, aimX: state.boss.x, aimY: state.boss.y, shoot: true, shootHeld: true }, DT);
+  for (let i = 0; i < 20; i++) step(state, { ...IDLE_INPUT, aimX: state.boss.x, aimY: state.boss.y, shootHeld: true }, DT);
+  state.player.aimActive = 1;
+}
+
 // paint immediately so headless screenshots never race the rAF loop
-for (let i = 0; i < 60; i++) step(state, IDLE_INPUT, DT); // settle the spawn
-render(ctx, state, { x: state.player.x + 3, y: state.player.y + 1 });
+if (!demo) for (let i = 0; i < 60; i++) step(state, IDLE_INPUT, DT); // settle the spawn
+paintOnce({ x: state.player.aimX || state.player.x + 3, y: state.player.aimY || state.player.y + 1 });
 
 requestAnimationFrame(frame);
