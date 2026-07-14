@@ -701,7 +701,7 @@ export function step(s: State, input: Input, dt: number): void {
       dx: dx / len, dy: dy / len, speed: 26, bounces: 0, dead: false, age: 0,
     });
     p.shootCooldown = 0.28;
-    if (!p.grounded && !cart.riding) p.ammo--;
+    if (!p.grounded && !cart.riding && p.coyote <= 0) p.ammo--; // coyote grace: just-walked-off shots are free
     s.stats.shots++;
     // small shoulder kick
     p.vx -= (dx / len) * 0.8;
