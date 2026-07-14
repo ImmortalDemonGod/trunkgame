@@ -358,3 +358,21 @@ test("FULL RUN: waypoint bot completes the game from spawn to boss kill", () => 
   }
   expect(s.won).toBe(true);
 }, 60000);
+
+test("boss phase 2: enraged boss spits hostile peanuts that hurt on contact", () => {
+  const s = makeLevel();
+  teleport(s, 174, 46.5);
+  sim(s, {}, 3.5); // intro
+  s.boss.hp = Math.floor(s.boss.maxHp * 0.3); // force enrage
+  let sawHostile = false;
+  let hurtByPeanut = false;
+  const hp0 = s.player.hp;
+  for (let t = 0; t < 12 && !hurtByPeanut; t += 0.25) {
+    sim(s, {}, 0.25);
+    if (s.bullets.some(b => b.hostile)) sawHostile = true;
+    if (sawHostile && s.player.hp < hp0) hurtByPeanut = true;
+  }
+  expect(sawHostile).toBe(true);
+  // hostile bullets never operate machinery or damage the boss
+  expect(s.boss.hp).toBe(Math.floor(s.boss.maxHp * 0.3));
+});

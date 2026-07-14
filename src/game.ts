@@ -66,6 +66,7 @@ export interface Bullet {
   bounces: number;
   dead: boolean;
   age: number;
+  hostile?: boolean; // boss peanuts: hurt the player, bounce like yours
 }
 
 export type BossPhase = "waiting" | "intro" | "chase" | "windup" | "leap" | "dead";
@@ -82,6 +83,7 @@ export interface Boss {
   faceDir: 1 | -1;
   dodgeCooldown: number;
   dodgeTelegraph: number;
+  spitCooldown: number;
 }
 
 export interface Particle {
@@ -102,6 +104,7 @@ export interface Dodger {
 export interface GrabRing { x: number; y: number; r: number }
 export interface Spring { x: number; y: number; w: number; revealed: boolean; compress: number }
 export interface Heart { x: number; y: number; taken: boolean }
+export interface Peanut { x: number; y: number; taken: boolean }
 
 export interface Player {
   x: number; y: number;   // center
@@ -145,6 +148,7 @@ export interface State {
   rings: GrabRing[];
   springs: Spring[];
   hearts: Heart[];
+  peanuts: Peanut[];
   tether: { ringIndex: number; len: number } | null;
   zoom: number; zoomTarget: number;
   paused: boolean;
@@ -158,7 +162,7 @@ export interface State {
   won: boolean;
   wonTimer: number;
   bossArenaX: number;   // boss activates when player passes this
-  stats: { shots: number; bounces: number; launches: number; deaths: number; damageTaken: number };
+  stats: { shots: number; bounces: number; launches: number; deaths: number; damageTaken: number; peanuts: number };
   toast: { text: string; timer: number };
 }
 
@@ -286,7 +290,7 @@ export function makeLevel(): State {
   const boss: Boss = {
     x: 179, y: 45.4 + 1.1, vx: 0, vy: 0, w: 2.6, h: 2.2,
     hp: 160, maxHp: 160, phase: "waiting", timer: 0,
-    attackCooldown: 0, leapCooldown: 4, hitFlash: 0, faceDir: -1, dodgeCooldown: 0, dodgeTelegraph: 0,
+    attackCooldown: 0, leapCooldown: 4, hitFlash: 0, faceDir: -1, dodgeCooldown: 0, dodgeTelegraph: 0, spitCooldown: 2,
   };
 
   const signs: Sign[] = [
@@ -330,6 +334,21 @@ export function makeLevel(): State {
     { x: 143.2, y: 0, w: 1.8, revealed: false, compress: 0 },
   ];
 
+  const peanuts: Peanut[] = [
+    { x: 24, y: 3.4, taken: false },     // above gap 1: launch through it
+    { x: 32.8, y: 2.6, taken: false },   // over the helper mover
+    { x: 39, y: 3.8, taken: false },     // gap C apex
+    { x: 66, y: 3.6, taken: false },     // cart route
+    { x: 75, y: 4.4, taken: false },     // cart route high
+    { x: 96.5, y: 8.2, taken: false },   // above ring 1 (swing up)
+    { x: 100.8, y: 10.8, taken: false }, // above ring 2
+    { x: 112, y: 13.2, taken: false },   // above tower B (chain)
+    { x: 116, y: 12.6, taken: false },   // bridge walk
+    { x: 128, y: 9.4, taken: false },    // above ring 3
+    { x: 144.1, y: 8.2, taken: false },  // above the spring shelf
+    { x: 168.5, y: 41, taken: false },   // just under the shaft exit
+  ];
+
   const hearts: Heart[] = [
     { x: 144.1, y: 6.4, taken: false },  // spring shelf reward
     { x: 166.8, y: 47, taken: false },   // at the shaft exit, before the boss
@@ -352,11 +371,11 @@ export function makeLevel(): State {
   return {
     t: 0, player, bullets: [], particles: [],
     platforms: P, movers, spikeBalls, spikeStrips, levers, doors, boxes, plates, winds,
-    cart, boss, signs, dodgers, rings, springs, hearts, tether: null,
+    cart, boss, signs, dodgers, rings, springs, hearts, peanuts, tether: null,
     zoom: 1, zoomTarget: 1, paused: false, checkpoints, checkpoint: { x: 2.5, y: 1.5 },
     deathY: -14, camX: player.x, camY: player.y + 1.5, shake: 0, hitStop: 0,
     rngState: 1337, won: false, wonTimer: 0, bossArenaX: 172,
-    stats: { shots: 0, bounces: 0, launches: 0, deaths: 0, damageTaken: 0 },
+    stats: { shots: 0, bounces: 0, launches: 0, deaths: 0, damageTaken: 0, peanuts: 0 },
     toast: { text: "", timer: 0 },
   };
 }
@@ -723,9 +742,16 @@ export function step(s: State, input: Input, dt: number): void {
       b.y += b.dy * b.speed * sub;
       const br: Rect = { x: b.x - 0.14, y: b.y - 0.14, w: 0.28, h: 0.28 };
 
+      // hostile peanuts hurt the player instead
+      if (b.hostile) {
+        if (Math.hypot(b.x - p.x, b.y - (p.y + 0.2)) < 0.75) {
+          damagePlayer(s, 12, b.dx * 6, 4);
+          b.dead = true;
+        }
+      }
       // boss hit
       const boss = s.boss;
-      if (boss.phase !== "waiting" && boss.phase !== "dead" &&
+      if (!b.hostile && boss.phase !== "waiting" && boss.phase !== "dead" &&
           overlaps(br, { x: boss.x - boss.w / 2, y: boss.y - boss.h / 2, w: boss.w, h: boss.h })) {
         const wasAbove = boss.hp >= boss.maxHp * 0.4;
         boss.hp = Math.max(0, boss.hp - 7);
@@ -745,7 +771,8 @@ export function step(s: State, input: Input, dt: number): void {
       }
 
       // lever hit (shooting a lever toggles it)
-      for (const lv of s.levers) {
+      if (b.hostile) { /* hostile shots don't operate machinery */ }
+      else for (const lv of s.levers) {
         const guard = s.doors.find(d => d.id === "leverguard");
         const guarded = guard ? guard.openAmount < 0.9 : false;
         if (!guarded && Math.hypot(lv.x - b.x, lv.y - b.y) < 0.7) {
@@ -756,7 +783,7 @@ export function step(s: State, input: Input, dt: number): void {
       if (b.dead) break;
 
       // box hit → slide
-      for (const box of s.boxes) {
+      if (!b.hostile) for (const box of s.boxes) {
         if (overlaps(br, box)) {
           box.vx += b.dx * 7;
           b.dead = true;
@@ -793,7 +820,7 @@ export function step(s: State, input: Input, dt: number): void {
 
         // RECOIL: impulse player away from surface if bounce is near
         const pd = Math.hypot(p.x - b.x, p.y - b.y);
-        if (pd < 6 && !cart.riding) {
+        if (!b.hostile && pd < 6 && !cart.riding) {
           const falloff = 1 - pd / 6;
           let ix = nx, iy = ny;
           if (ny > 0.5) iy += 1; // ground bounces boost extra up (the original's trick)
@@ -855,6 +882,15 @@ export function step(s: State, input: Input, dt: number): void {
         s.shake = Math.max(s.shake, 0.2);
         spawnParticles(s, p.x, sp.y + 0.4, 8, "puff", 180);
       }
+    }
+  }
+
+  // ---- peanuts (optional-route collectibles) ----
+  for (const pn of s.peanuts) {
+    if (!pn.taken && Math.hypot(pn.x - p.x, pn.y - p.y) < 0.9) {
+      pn.taken = true;
+      s.stats.peanuts++;
+      spawnParticles(s, pn.x, pn.y, 6, "confetti", 45);
     }
   }
 
@@ -1001,6 +1037,21 @@ function updateBoss(s: State, input: Input, dt: number) {
       boss.vx *= Math.pow(0.05, dt);
       const enraged = boss.hp < boss.maxHp * 0.4;
       const chaseV = (enraged ? 5.6 : 4.6) * boss.faceDir;
+      // PHASE 2: enraged, he uses your own trick — bouncing trunk-shots
+      boss.spitCooldown -= dt;
+      if (enraged && boss.spitCooldown <= 0) {
+        boss.spitCooldown = 2.6;
+        for (const spread of [-0.25, 0.05, 0.35]) {
+          const ddx = Math.sign(p.x - boss.x) || boss.faceDir;
+          const len = Math.hypot(1, spread) || 1;
+          s.bullets.push({
+            x: boss.x + ddx * 1.4, y: boss.y + 0.4,
+            dx: ddx / len, dy: spread / len,
+            speed: 13, bounces: 0, dead: false, age: 0, hostile: true,
+          });
+        }
+        s.toast = { text: "peanut volley!", timer: 0.9 };
+      }
       boss.x += (chaseV + boss.vx) * dt;
       // gravity/floor
       boss.y = Math.max(45.4 + boss.h / 2, boss.y - 10 * dt);

@@ -208,6 +208,21 @@ export function render(ctx: CanvasRenderingContext2D, s: State, mouse: { x: numb
     ctx.fillRect(a.x - 8, a.y + 6, 16, 6);
   }
 
+  // ---- peanuts ----
+  for (const pn of s.peanuts) {
+    if (pn.taken) continue;
+    const a = worldToScreen(s, pn.x, pn.y + Math.sin(s.t * 3 + pn.x) * 0.08);
+    ctx.save();
+    ctx.translate(a.x, a.y); ctx.rotate(0.4 + Math.sin(s.t * 2 + pn.x) * 0.15);
+    ctx.fillStyle = "#e8b04a";
+    ctx.beginPath(); ctx.ellipse(0, 0, 9, 6.2, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = "rgba(120,70,20,0.55)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-6, -1); ctx.quadraticCurveTo(0, 3, 6, -1); ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,0.5)";
+    ctx.beginPath(); ctx.arc(-3, -2, 2, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
   // ---- hearts ----
   for (const h of s.hearts) {
     if (h.taken) continue;
@@ -269,12 +284,21 @@ export function render(ctx: CanvasRenderingContext2D, s: State, mouse: { x: numb
   // ---- bullets ----
   for (const b of s.bullets) {
     const a = worldToScreen(s, b.x, b.y);
-    ctx.fillStyle = "rgba(255,210,74,0.35)";
-    ctx.beginPath(); ctx.arc(a.x - b.dx * 8, a.y + b.dy * 8, 8, 0, 7); ctx.fill();
-    ctx.fillStyle = PAL.bullet;
-    ctx.beginPath(); ctx.arc(a.x, a.y, 6, 0, 7); ctx.fill();
-    ctx.fillStyle = "#fff";
-    ctx.beginPath(); ctx.arc(a.x - 1.5, a.y - 1.5, 2.5, 0, 7); ctx.fill();
+    if (b.hostile) {
+      ctx.fillStyle = "rgba(224,82,79,0.35)";
+      ctx.beginPath(); ctx.arc(a.x - b.dx * 8, a.y + b.dy * 8, 9, 0, 7); ctx.fill();
+      ctx.fillStyle = "#e0524f";
+      ctx.beginPath(); ctx.ellipse(a.x, a.y, 8, 6, s.t * 6, 0, 7); ctx.fill();
+      ctx.fillStyle = "#8a2c2a";
+      ctx.beginPath(); ctx.arc(a.x + 2, a.y, 2.5, 0, 7); ctx.fill();
+    } else {
+      ctx.fillStyle = "rgba(255,210,74,0.35)";
+      ctx.beginPath(); ctx.arc(a.x - b.dx * 8, a.y + b.dy * 8, 8, 0, 7); ctx.fill();
+      ctx.fillStyle = PAL.bullet;
+      ctx.beginPath(); ctx.arc(a.x, a.y, 6, 0, 7); ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(a.x - 1.5, a.y - 1.5, 2.5, 0, 7); ctx.fill();
+    }
   }
 
   // ---- boss ----
@@ -655,6 +679,11 @@ function drawHud(ctx: CanvasRenderingContext2D, s: State) {
   ctx.font = "700 13px system-ui, sans-serif";
   ctx.textAlign = "left";
   ctx.fillText(`${Math.ceil(p.hp)}`, 44, 33);
+  // peanut tally
+  ctx.fillStyle = "#e8b04a";
+  ctx.beginPath(); ctx.ellipse(258, 29, 8, 5.6, 0.4, 0, 7); ctx.fill();
+  ctx.fillStyle = "#ffe9c9";
+  ctx.fillText(`${s.stats.peanuts}/${s.peanuts.length}`, 270, 33);
 
   // toast
   if (s.toast.timer > 0) {
@@ -679,7 +708,7 @@ function drawHud(ctx: CanvasRenderingContext2D, s: State) {
     ctx.fillStyle = "#ffe9c9";
     ctx.font = "600 20px system-ui, sans-serif";
     const st = s.stats;
-    ctx.fillText(`shots ${st.shots} · bounces ${st.bounces} · launches ${st.launches} · deaths ${st.deaths}`, VIEW_W / 2, VIEW_H / 2 + 14);
+    ctx.fillText(`shots ${st.shots} · bounces ${st.bounces} · launches ${st.launches} · deaths ${st.deaths} · peanuts ${st.peanuts}/${s.peanuts.length}`, VIEW_W / 2, VIEW_H / 2 + 14);
     ctx.font = "600 16px system-ui, sans-serif";
     ctx.fillText("press R to play again", VIEW_W / 2, VIEW_H / 2 + 48);
   }

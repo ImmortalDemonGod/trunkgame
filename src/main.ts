@@ -31,7 +31,7 @@ window.addEventListener("keydown", (e) => {
   if (e.code === "KeyR" && (state.won || state.player.dead || e.shiftKey)) {
     state = makeLevel();
     window.__state = state;
-    prev = { shots: 0, bounces: 0, launches: 0, deaths: 0, hp: 100, bossHp: state.boss.maxHp, won: false, toast: "", hearts: 0, leverOn: false, cp: "" };
+    prev = { shots: 0, bounces: 0, launches: 0, deaths: 0, hp: 100, bossHp: state.boss.maxHp, won: false, toast: "", hearts: 0, leverOn: false, cp: "", peanuts: 0 };
   }
 });
 window.addEventListener("keyup", (e) => keys.delete(e.code));
@@ -96,6 +96,7 @@ class Sfx {
   checkpoint() { this.blip(660, 0.12, "sine", 0.7); this.blip(880, 0.18, "sine", 0.7); }
   bossHit() { this.blip(220, 0.15, "square", 0.9, -60); this.noise(0.08, 0.6); }
   pickup() { this.blip(780, 0.1, "sine", 0.7, 240); }
+  peanut() { this.blip(880, 0.07, "triangle", 0.6, 180); this.blip(1180, 0.09, "triangle", 0.5, 120); }
   dry() { this.blip(140, 0.08, "square", 0.5, -40); }
   win() { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => this.blip(f, 0.35, "triangle", 0.8), i * 130)); }
   death() { this.blip(300, 0.5, "sawtooth", 0.8, -240); }
@@ -103,7 +104,7 @@ class Sfx {
 const audio = new Sfx();
 
 // audio triggers by diffing state
-let prev = { shots: 0, bounces: 0, launches: 0, deaths: 0, hp: 100, bossHp: 160, won: false, toast: "", hearts: 0, leverOn: false, cp: "" };
+let prev = { shots: 0, bounces: 0, launches: 0, deaths: 0, hp: 100, bossHp: 160, won: false, toast: "", hearts: 0, leverOn: false, cp: "", peanuts: 0 };
 function audioTick(s: State) {
   if (s.stats.shots > prev.shots) audio.shoot();
   if (s.stats.bounces > prev.bounces) audio.bounce();
@@ -114,13 +115,14 @@ function audioTick(s: State) {
   if (s.won && !prev.won) audio.win();
   const hearts = s.hearts.filter(h => h.taken).length;
   if (hearts > prev.hearts) audio.pickup();
+  if (s.stats.peanuts > prev.peanuts) audio.peanut();
   const lv = s.levers.some(l => l.on);
   if (lv !== prev.leverOn) audio.lever();
   const cp = `${s.checkpoint.x},${s.checkpoint.y}`;
   if (cp !== prev.cp && prev.cp !== "") audio.checkpoint();
   if (s.toast.text === "out of puff! land to reload" && s.toast.timer > 0.99) audio.dry();
   if (s.toast.text === "a spring appears!" && s.toast.text !== prev.toast) audio.spring();
-  prev = { shots: s.stats.shots, bounces: s.stats.bounces, launches: s.stats.launches, deaths: s.stats.deaths, hp: s.player.hp, bossHp: s.boss.hp, won: s.won, toast: s.toast.text, hearts, leverOn: lv, cp };
+  prev = { shots: s.stats.shots, bounces: s.stats.bounces, launches: s.stats.launches, deaths: s.stats.deaths, hp: s.player.hp, bossHp: s.boss.hp, won: s.won, toast: s.toast.text, hearts, leverOn: lv, cp, peanuts: s.stats.peanuts };
 }
 
 // ---------- loop ----------
