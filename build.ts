@@ -5,7 +5,7 @@ if (!result.success) {
   process.exit(1);
 }
 const js = await result.outputs[0].text();
-const html = `<meta charset="utf-8">
+const html = `<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TRUNK!</title>
 <style>
   :root{--ink:#1a1230;--dusk:#2b1d4f;--peach:#e8875a;--gold:#ffd24a;--lilac:#b9a6d9;--rose:#ff7e67}
