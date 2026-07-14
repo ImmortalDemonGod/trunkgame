@@ -351,7 +351,7 @@ export function makeLevel(): State {
 
   const hearts: Heart[] = [
     { x: 144.1, y: 6.4, taken: false },  // spring shelf reward
-    { x: 166.8, y: 47, taken: false },   // at the shaft exit, before the boss
+    { x: 168.5, y: 46.6, taken: false }, // on the landing path out of the shaft
     { x: 92.5, y: 1.2, taken: false },   // after cart
     { x: 72, y: 4.2, taken: false },     // over the rail — shoot nothing, just lean and grab
     { x: 172.6, y: 27.5, taken: false }, // wind shaft, safe side opposite the ball
@@ -374,7 +374,7 @@ export function makeLevel(): State {
     cart, boss, signs, dodgers, rings, springs, hearts, peanuts, tether: null,
     zoom: 1, zoomTarget: 1, paused: false, checkpoints, checkpoint: { x: 2.5, y: 1.5 },
     deathY: -14, camX: player.x, camY: player.y + 1.5, shake: 0, hitStop: 0,
-    rngState: 1337, won: false, wonTimer: 0, bossArenaX: 172,
+    rngState: 1337, won: false, wonTimer: 0, bossArenaX: 168.2,
     stats: { shots: 0, bounces: 0, launches: 0, deaths: 0, damageTaken: 0, peanuts: 0 },
     toast: { text: "", timer: 0 },
   };

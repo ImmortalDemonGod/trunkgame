@@ -30,7 +30,7 @@ boss who dodges shots aimed at his face (bank shots off the mirrors).
 
 ## Verification
 
-- 16/16 bot tests green; full-run bot finishes spawn→boss-kill with 0 deaths.
+- 19/19 bot tests green; full-run bot finishes spawn→boss-kill with 0 deaths.
 - 36,000-step random-input fuzz: no NaN, no leaks, no out-of-world.
 - Casual-player sim (reaction lag + aim error): median 1 death on the gap field.
 - Honest boss duel (no healing): bot-optimal kill ≈ 15s taking 10 damage;

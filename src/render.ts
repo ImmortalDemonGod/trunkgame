@@ -604,7 +604,35 @@ function drawPlayer(ctx: CanvasRenderingContext2D, s: State, mouse: { x: number;
 
 function drawBoss(ctx: CanvasRenderingContext2D, s: State) {
   const boss = s.boss;
-  if (boss.phase === "waiting") return;
+  if (boss.phase === "waiting") {
+    // dozing on the far ledge: the arena should read "boss ahead", not "empty roof"
+    const sc = BASE_SCALE * s.zoom;
+    const a = worldToScreen(s, boss.x, boss.y - 0.25);
+    const w = boss.w * sc, h = boss.h * sc;
+    const breathe = 1 + Math.sin(s.t * 1.1) * 0.03;
+    ctx.fillStyle = PAL.boss;
+    ctx.beginPath(); ctx.ellipse(a.x, a.y, (w / 2) * 1.05, (h / 2) * 0.8 * breathe, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = PAL.bossDark;
+    ctx.beginPath(); ctx.ellipse(a.x + w * 0.28, a.y - h * 0.18, w * 0.18, h * 0.24, 0.4, 0, 7); ctx.fill();
+    // closed eye
+    ctx.strokeStyle = "#2a2440"; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(a.x - w * 0.28, a.y - h * 0.1); ctx.lineTo(a.x - w * 0.14, a.y - h * 0.1); ctx.stroke();
+    // trunk curled on the floor
+    ctx.strokeStyle = PAL.boss; ctx.lineWidth = 11; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(a.x - w * 0.32, a.y + h * 0.05);
+    ctx.quadraticCurveTo(a.x - w * 0.62, a.y + h * 0.3, a.x - w * 0.5, a.y + h * 0.36);
+    ctx.stroke();
+    // zzz
+    ctx.fillStyle = "rgba(233,217,239,0.8)";
+    ctx.font = "700 16px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    const zt = (s.t % 2) / 2;
+    ctx.globalAlpha = 1 - zt;
+    ctx.fillText("z", a.x + w * 0.4 + zt * 10, a.y - h * 0.6 - zt * 18);
+    ctx.globalAlpha = 1;
+    return;
+  }
   const sc = BASE_SCALE * s.zoom;
   const a = worldToScreen(s, boss.x, boss.y);
   const w = boss.w * sc, h = boss.h * sc;

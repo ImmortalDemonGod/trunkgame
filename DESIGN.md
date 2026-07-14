@@ -69,6 +69,11 @@ look-ahead.
     the boss's entrance leap, returns on fight start.
 16. **Pause** (GamePause) — P toggles.
 17. Bullets spawn from the trunk tip (issue #33's intent), not the body.
+18. **Boss phase 2** — below 40% he spits volleys of hostile bouncing peanuts
+    (your own mechanic, hostile: can't operate machinery, can't hurt him).
+19. **Peanut collectibles** — 12 on optional routes; perfect-win ending at 12/12.
+20. **Title card** — click-to-start front door doubles as the audio unlock; M
+    toggles a procedural chiptune loop.
 
 ## Level beats (left-to-right this time, ~8 screens)
 
