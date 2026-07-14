@@ -250,6 +250,9 @@ function drawTitle() {
   ctx.fillStyle = "#ffe9c9";
   ctx.font = "600 19px system-ui, sans-serif";
   ctx.fillText("no jump button — recoil is the jump", VIEW_W / 2, VIEW_H / 2 + 4);
+  ctx.fillStyle = "#d9b3ff";
+  ctx.font = "500 15px system-ui, sans-serif";
+  ctx.fillText("climb to the roof · wake BIG GRUMP · regret it", VIEW_W / 2, VIEW_H / 2 + 30);
   ctx.fillStyle = `rgba(255,233,201,${0.6 + 0.4 * Math.sin(t * 3)})`;
   ctx.font = "800 24px system-ui, sans-serif";
   ctx.fillText("click to start", VIEW_W / 2, VIEW_H / 2 + 64);
