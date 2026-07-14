@@ -25,7 +25,7 @@ let interactQueued = false;
 
 window.addEventListener("keydown", (e) => {
   if (e.repeat) return;
-  if (!started && (e.code === "Space" || e.code === "Enter")) { started = true; audio.resume(); audio.startMusic(); return; }
+  if (!started && (e.code === "Space" || e.code === "Enter")) { started = true; startFresh(); audio.resume(); audio.startMusic(); return; }
   if (e.code === "KeyM") audio.toggleMusic();
   keys.add(e.code);
   if (e.code === "KeyE") interactQueued = true;
@@ -45,10 +45,16 @@ canvas.addEventListener("mousemove", (e) => {
 canvas.addEventListener("mousedown", (e) => {
   if (e.button === 0) {
     audio.resume();
-    if (!started) { started = true; audio.startMusic(); return; }
+    if (!started) { started = true; startFresh(); audio.startMusic(); return; }
     shootQueued = true; shootHeld = true;
   }
 });
+
+function startFresh() {
+  state = makeLevel();
+  window.__state = state;
+  prev = { shots: 0, bounces: 0, launches: 0, deaths: 0, hp: 100, bossHp: state.boss.maxHp, won: false, toast: "", hearts: 0, leverOn: false, cp: "", peanuts: 0 };
+}
 window.addEventListener("mouseup", () => { shootHeld = false; });
 canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 document.addEventListener("visibilitychange", () => { if (document.hidden && started && !state.won) state.paused = true; });
@@ -176,12 +182,25 @@ function audioTick(s: State) {
 // ---------- loop ----------
 let acc = 0;
 let last = performance.now();
+let attractT = 0;
 
 function frame(now: number) {
   acc += Math.min(0.1, (now - last) / 1000);
   last = now;
 
   const mouseWorld = screenToWorld(state, mouseScreen.x, mouseScreen.y);
+  while (acc >= DT && !started) {
+    // attract mode: a little demo stroll behind the title card
+    attractT += DT;
+    const hop = attractT % 1.6 < DT * 1.5 && state.player.grounded;
+    step(state, {
+      ...IDLE_INPUT, right: true,
+      aimX: state.player.x - 0.3, aimY: state.player.y - 2,
+      shoot: hop, shootHeld: false,
+    }, DT);
+    if (state.player.x > 19 || state.player.dead) state = makeLevel();
+    acc -= DT;
+  }
   while (acc >= DT && started) {
     const input: Input = {
       left: keys.has("KeyA") || keys.has("ArrowLeft"),
