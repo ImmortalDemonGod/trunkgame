@@ -171,7 +171,7 @@ function audioTick(s: State) {
   if (s.stats.deaths > prev.deaths) audio.death();
   else if (s.player.hp < prev.hp) audio.hurt();
   if (s.boss.hp < prev.bossHp) audio.bossHit();
-  if (s.won && !prev.won) { audio.win(); recordBest(s.runTime); try { localStorage.setItem("trunk-won", "1"); } catch {} }
+  if (s.won && !prev.won) { audio.win(); recordBest(s.runTime, s.grump); try { localStorage.setItem("trunk-won", "1"); } catch {} }
   const hearts = s.hearts.filter(h => h.taken).length;
   if (hearts > prev.hearts) audio.pickup();
   if (s.stats.peanuts > prev.peanuts) audio.peanut();

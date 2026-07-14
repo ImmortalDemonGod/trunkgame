@@ -50,11 +50,11 @@ export function render(ctx: CanvasRenderingContext2D, s: State, mouse: { x: numb
   const shx = (!REDUCED_MOTION && s.shake > 0 ? (Math.sin(s.t * 91) * s.shake * 8) : 0);
   const shy = (!REDUCED_MOTION && s.shake > 0 ? (Math.cos(s.t * 83) * s.shake * 6) : 0);
 
-  // ---- sky ----
+  // ---- sky (grump mode runs under an angrier dusk) ----
   const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
-  g.addColorStop(0, PAL.skyTop);
-  g.addColorStop(0.55, PAL.skyMid);
-  g.addColorStop(1, PAL.skyLow);
+  g.addColorStop(0, s.grump ? "#3d1230" : PAL.skyTop);
+  g.addColorStop(0.55, s.grump ? "#8a2c4e" : PAL.skyMid);
+  g.addColorStop(1, s.grump ? "#d96a3e" : PAL.skyLow);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
@@ -836,7 +836,7 @@ function drawHud(ctx: CanvasRenderingContext2D, s: State) {
     ctx.font = "600 20px system-ui, sans-serif";
     const st = s.stats;
     ctx.fillText(`${fmtTime(s.runTime)} · shots ${st.shots} · launches ${st.launches} · deaths ${st.deaths} · peanuts ${st.peanuts}/${s.peanuts.length}`, VIEW_W / 2, VIEW_H / 2 + 14);
-    const best = bestTime();
+    const best = bestTimeFor(s.grump);
     if (best !== null) {
       ctx.font = "600 15px system-ui, sans-serif";
       ctx.fillStyle = s.runTime <= best ? "#ffd24a" : "#b9a6d9";
@@ -882,18 +882,20 @@ function fmtTime(t: number): string {
   return `${m}:${sec.toFixed(1).padStart(4, "0")}`;
 }
 
-let cachedBest: number | null | undefined;
-function bestTime(): number | null {
-  if (cachedBest !== undefined) return cachedBest;
-  try { const v = localStorage.getItem("trunk-best"); cachedBest = v ? Number(v) : null; }
-  catch { cachedBest = null; }
-  return cachedBest;
+const cachedBest: Record<string, number | null | undefined> = {};
+function bestKey(grump: boolean) { return grump ? "trunk-best-grump" : "trunk-best"; }
+function bestTimeFor(grump: boolean): number | null {
+  const k = bestKey(grump);
+  if (cachedBest[k] !== undefined) return cachedBest[k]!;
+  try { const v = localStorage.getItem(k); cachedBest[k] = v ? Number(v) : null; }
+  catch { cachedBest[k] = null; }
+  return cachedBest[k]!;
 }
-export function recordBest(t: number) {
-  const b = bestTime();
+export function recordBest(t: number, grump: boolean) {
+  const b = bestTimeFor(grump);
   if (b === null || t < b) {
-    try { localStorage.setItem("trunk-best", String(t)); } catch {}
-    cachedBest = t;
+    try { localStorage.setItem(bestKey(grump), String(t)); } catch {}
+    cachedBest[bestKey(grump)] = t;
   }
 }
 
