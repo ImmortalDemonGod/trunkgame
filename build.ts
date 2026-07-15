@@ -37,5 +37,4 @@ const html = `<meta charset="utf-8">\n<meta name="viewport" content="width=devic
 <script>${js.replace(/<\/script>/g, "<\\/script>")}</script>
 `;
 await Bun.write("dist/index.html", html);
-await Bun.write("docs/index.html", html); // GitHub Pages mirror
-console.log(`dist/index.html: ${(html.length / 1024).toFixed(1)} KB (docs/ mirrored)`);
+console.log(`dist/index.html: ${(html.length / 1024).toFixed(1)} KB`);

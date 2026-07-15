@@ -218,72 +218,6 @@ export function render(ctx: CanvasRenderingContext2D, s: State, mouse: { x: numb
     ctx.beginPath(); ctx.arc(a.x, a.y, r.r * sc * 0.55, 0, 7); ctx.fill();
   }
 
-  // ---- beehives (shoot to drop honey) ----
-  for (const hv of s.hives) {
-    if (hv.dropped) continue;
-    const a = worldToScreen(s, hv.x, hv.y);
-    const sway = Math.sin(s.t * 1.4 + hv.x) * 3;
-    ctx.strokeStyle = "#8a6a3a"; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(a.x, a.y - 30); ctx.lineTo(a.x + sway, a.y); ctx.stroke();
-    ctx.fillStyle = hv.hp < 2 ? "#d9a53e" : "#e8b04a";
-    ctx.beginPath(); ctx.ellipse(a.x + sway, a.y + 12, 13, 16, 0, 0, 7); ctx.fill();
-    ctx.strokeStyle = "rgba(120,70,20,0.6)"; ctx.lineWidth = 2;
-    for (const dy of [-6, 0, 6]) { ctx.beginPath(); ctx.moveTo(a.x + sway - 11, a.y + 12 + dy); ctx.lineTo(a.x + sway + 11, a.y + 12 + dy); ctx.stroke(); }
-    ctx.fillStyle = "#3d3548";
-    ctx.beginPath(); ctx.arc(a.x + sway, a.y + 20, 3.5, 0, 7); ctx.fill();
-    // a bee or two
-    const bt = s.t * 5 + hv.x;
-    ctx.fillStyle = "#ffd24a";
-    ctx.fillRect(a.x + sway + Math.cos(bt) * 20 - 2, a.y + 12 + Math.sin(bt * 1.3) * 12 - 2, 4, 3);
-  }
-
-  // ---- arena spike ring (execute the trapped boss) ----
-  {
-    const sr = s.spikeRing;
-    const a = worldToScreen(s, sr.x, sr.y - sr.pull * 0.5);
-    const top = worldToScreen(s, sr.x, sr.y + 1.4);
-    ctx.strokeStyle = "#b9a6d9"; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(top.x, top.y); ctx.lineTo(a.x, a.y - 10); ctx.stroke();
-    ctx.strokeStyle = sr.cooldown > 0 ? "rgba(185,166,217,0.4)" : "#e0524f"; ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.arc(a.x, a.y, 11, 0, 7); ctx.stroke();
-    if (sr.pull > 0) { ctx.fillStyle = "rgba(224,82,79,0.9)"; ctx.fillRect(a.x - 14, a.y + 18, 28 * sr.pull, 4); }
-    // strike: spikes slam down over every honey pool
-    if (sr.strikeTimer > 0) {
-      for (const h of s.honey) {
-        if (h.falling) continue;
-        const hs = worldToScreen(s, h.x, h.y + 3.2);
-        ctx.fillStyle = "rgba(61,53,72,0.95)";
-        const n = 5;
-        for (let i = 0; i < n; i++) {
-          const x0 = hs.x + (i / n) * h.w * sc, x1 = hs.x + ((i + 1) / n) * h.w * sc;
-          const drop = (0.5 - sr.strikeTimer) * 2 * 2.4 * sc;
-          ctx.beginPath();
-          ctx.moveTo(x0, hs.y); ctx.lineTo((x0 + x1) / 2, hs.y + 1.1 * sc + drop); ctx.lineTo(x1, hs.y);
-          ctx.closePath(); ctx.fill();
-        }
-      }
-    }
-  }
-
-  // ---- pull ring (spike alley disarm) ----
-  {
-    const pr = s.pullRing;
-    const a = worldToScreen(s, pr.x, pr.y - pr.pull * 0.5);
-    const top = worldToScreen(s, pr.x, pr.y + 1.6);
-    ctx.strokeStyle = "#b9a6d9"; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(top.x, top.y); ctx.lineTo(a.x, a.y - 10); ctx.stroke();
-    ctx.strokeStyle = pr.charged > 0 ? "#57d95a" : "#ffd24a"; ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.arc(a.x, a.y, 11, 0, 7); ctx.stroke();
-    if (pr.pull > 0) {
-      ctx.fillStyle = "rgba(255,210,74,0.9)";
-      ctx.fillRect(a.x - 14, a.y + 18, 28 * pr.pull, 4);
-    }
-    if (pr.charged > 0) {
-      ctx.fillStyle = "#57d95a"; ctx.font = "700 12px system-ui, sans-serif"; ctx.textAlign = "center";
-      ctx.fillText(pr.charged.toFixed(1), a.x, a.y - 20);
-    }
-  }
-
   // ---- levers ----
   for (const lv of s.levers) {
     const a = worldToScreen(s, lv.x, lv.y);
@@ -313,23 +247,6 @@ export function render(ctx: CanvasRenderingContext2D, s: State, mouse: { x: numb
     ctx.fillStyle = "rgba(255,255,255,0.5)";
     ctx.beginPath(); ctx.arc(-3, -2, 2, 0, 7); ctx.fill();
     ctx.restore();
-  }
-
-  // ---- honey ----
-  for (const hp of s.honey) {
-    const a = worldToScreen(s, hp.x, hp.y);
-    if (hp.falling) {
-      ctx.fillStyle = "#e8a51e";
-      ctx.beginPath(); ctx.ellipse(a.x + hp.w * sc / 2, a.y, 8, 12, 0, 0, 7); ctx.fill();
-      ctx.fillStyle = "rgba(255,220,120,0.5)";
-      ctx.beginPath(); ctx.ellipse(a.x + hp.w * sc / 2, a.y - 14, 4, 8, 0, 0, 7); ctx.fill();
-    } else {
-      const fade = Math.min(1, hp.life / 2);
-      ctx.fillStyle = `rgba(232,165,30,${0.85 * fade})`;
-      ctx.beginPath(); ctx.ellipse(a.x + hp.w * sc / 2, a.y + 3, (hp.w / 2) * sc, 7, 0, 0, 7); ctx.fill();
-      ctx.fillStyle = `rgba(255,220,120,${0.5 * fade})`;
-      ctx.beginPath(); ctx.ellipse(a.x + hp.w * sc / 2 - 8, a.y, 6, 3, 0, 0, 7); ctx.fill();
-    }
   }
 
   // ---- hearts ----
@@ -546,9 +463,8 @@ function drawPlatform(ctx: CanvasRenderingContext2D, s: State, p: Platform) {
 
 function drawSpikeStrip(ctx: CanvasRenderingContext2D, s: State, st: { x: number; y: number; w: number; h: number }) {
   const sc = BASE_SCALE * s.zoom;
-  const down = s.pullRing.charged > 0;
-  const a = worldToScreen(s, st.x, st.y + st.h * (down ? 0.25 : 1));
-  ctx.fillStyle = down ? "rgba(61,53,72,0.45)" : PAL.spike;
+  const a = worldToScreen(s, st.x, st.y + st.h);
+  ctx.fillStyle = PAL.spike;
   const n = Math.round(st.w / 0.45);
   for (let i = 0; i < n; i++) {
     const x0 = a.x + (i / n) * st.w * sc;

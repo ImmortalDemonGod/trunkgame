@@ -104,10 +104,6 @@ export interface Dodger {
 export interface GrabRing { x: number; y: number; r: number }
 export interface Spring { x: number; y: number; w: number; revealed: boolean; compress: number }
 export interface Heart { x: number; y: number; taken: boolean }
-export interface HoneyPuddle { x: number; y: number; w: number; life: number; falling: boolean; fallY: number }
-export interface PullRing { x: number; y: number; pull: number; charged: number } // pull 0..1 while held; charged = seconds of spikes-down remaining
-export interface Beehive { x: number; y: number; hp: number; dropped: boolean }
-export interface SpikeRing { x: number; y: number; pull: number; cooldown: number; strikeTimer: number }
 export interface Peanut { x: number; y: number; taken: boolean }
 
 export interface Player {
@@ -155,11 +151,6 @@ export interface State {
   springs: Spring[];
   hearts: Heart[];
   peanuts: Peanut[];
-  honey: HoneyPuddle[];
-  honeyTimer: number;
-  pullRing: PullRing;
-  hives: Beehive[];
-  spikeRing: SpikeRing;
   tether: { ringIndex: number; len: number } | null;
   zoom: number; zoomTarget: number;
   paused: boolean;
@@ -311,13 +302,12 @@ export function makeLevel(grump = false): State {
     { x: 12.5, y: 1.6, text: "click — shoot!" },
     { x: 17.5, y: 1.6, text: "shoot the GROUND to launch ↑" },
     { x: 24, y: 1.6, text: "gaps ahead — launch across!" },
-    { x: 53.5, y: 4.0, text: "ride the cart — or pull the ring & RUN" },
+    { x: 57.5, y: 4.2, text: "press E — ride the cart" },
     { x: 92, y: 1.6, text: "shots BOUNCE off green" },
     { x: 96.5, y: 1.6, text: "chain shots mid-air to climb higher!" },
     { x: 93.8, y: 3.2, text: "hold E by a ring — swing (grabs reload!)" },
     { x: 139.7, y: 4.6, text: "box → plate → lever → door" },
     { x: 161.7, y: 4.5, text: "the wind carries you — steer!" },
-    { x: 168.5, y: 48.6, text: "hive → honey → lure him in → PULL" },
   ];
 
   const checkpoints: Vec[] = [
@@ -384,13 +374,7 @@ export function makeLevel(grump = false): State {
   return {
     t: 0, player, bullets: [], particles: [],
     platforms: P, movers, spikeBalls, spikeStrips, levers, doors, boxes, plates, winds,
-    cart, boss, signs, dodgers, rings, springs, hearts, peanuts, honey: [], honeyTimer: 6,
-    pullRing: { x: 53.5, y: 1.9, pull: 0, charged: 0 },
-    hives: [
-      { x: 161.5, y: 51.5, hp: 2, dropped: false },
-      { x: 176.5, y: 51.5, hp: 2, dropped: false },
-    ],
-    spikeRing: { x: 169, y: 47.6, pull: 0, cooldown: 0, strikeTimer: 0 }, tether: null,
+    cart, boss, signs, dodgers, rings, springs, hearts, peanuts, tether: null,
     zoom: 1, zoomTarget: 1, paused: false, checkpoints, checkpoint: { x: 2.5, y: 1.5 },
     deathY: -14, camX: player.x, camY: player.y + 1.5, shake: 0, hitStop: 0,
     rngState: 1337, won: false, wonTimer: 0, bossArenaX: 168.2,
@@ -907,7 +891,6 @@ export function step(s: State, input: Input, dt: number): void {
     }
   }
   for (const st of s.spikeStrips) {
-    if (s.pullRing.charged > 0) continue; // ring pulled: spikes are down
     if (overlaps(pr, st) && !cart.riding) damagePlayer(s, 20, 0, 9);
   }
 
@@ -987,86 +970,6 @@ export function step(s: State, input: Input, dt: number): void {
     if (Math.hypot(dg.x - p.x, dg.y - p.y) < 1.1) damagePlayer(s, 10, Math.sign(p.x - dg.x) * 7, 5);
   }
 
-  // ---- honey (Marc's design): STRIKE THE BEEHIVE to drop honey ----
-  for (const hv of s.hives) {
-    if (hv.dropped) continue;
-    for (const b of s.bullets) {
-      if (!b.hostile && !b.dead && Math.hypot(b.x - hv.x, b.y - hv.y) < 0.8) {
-        b.dead = true;
-        hv.hp--;
-        spawnParticles(s, hv.x, hv.y, 8, "spark", 45);
-        if (hv.hp <= 0) {
-          hv.dropped = true;
-          s.honey.push({ x: hv.x - 1.5, y: hv.y - 1, w: 3, life: 22, falling: true, fallY: 45.5 });
-          s.toast = { text: "honey drops!", timer: 1.2 };
-          s.shake = Math.max(s.shake, 0.2);
-        }
-      }
-    }
-  }
-  for (const h of s.honey) {
-    if (h.falling) {
-      h.y -= 9 * dt;
-      if (h.y <= h.fallY) { h.y = h.fallY; h.falling = false; spawnParticles(s, h.x + h.w / 2, h.y + 0.2, 8, "puff", 40); }
-    } else {
-      h.life -= dt;
-    }
-  }
-  s.honey = s.honey.filter(h => h.life > 0);
-
-  // ---- pull ring (Marc's RingPull idea): hold E to retract the spike alley ----
-  {
-    const pr = s.pullRing;
-    pr.charged = Math.max(0, pr.charged - dt);
-    const near = Math.hypot(pr.x - p.x, pr.y - p.y) < 1.8;
-    if (near && input.interactHeld && pr.charged <= 0) {
-      pr.pull = Math.min(1, pr.pull + dt * 0.9);
-      if (pr.pull >= 1) {
-        pr.pull = 0;
-        pr.charged = 8;
-        s.toast = { text: "spikes down — RUN!", timer: 1.6 };
-        s.shake = Math.max(s.shake, 0.2);
-        spawnParticles(s, pr.x, pr.y, 10, "spark", 120);
-      }
-    } else if (!(near && input.interactHeld)) {
-      pr.pull = Math.max(0, pr.pull - dt * 1.5);
-    }
-  }
-
-  // ---- arena spike ring (Marc's design): pull to spike the trapped boss ----
-  {
-    const sr = s.spikeRing;
-    sr.cooldown = Math.max(0, sr.cooldown - dt);
-    sr.strikeTimer = Math.max(0, sr.strikeTimer - dt);
-    const near = Math.hypot(sr.x - p.x, sr.y - p.y) < 1.9;
-    if (near && input.interactHeld && sr.cooldown <= 0) {
-      sr.pull = Math.min(1, sr.pull + dt * 1.1);
-      if (sr.pull >= 1) {
-        sr.pull = 0;
-        sr.cooldown = 6;
-        sr.strikeTimer = 0.5;
-        s.shake = Math.max(s.shake, 0.5);
-        s.hitStop = Math.max(s.hitStop, 0.06);
-        const boss = s.boss;
-        const bossInHoney = s.honey.some(h => !h.falling && boss.x + boss.w / 2 > h.x && boss.x - boss.w / 2 < h.x + h.w && Math.abs(boss.y - boss.h / 2 - h.y) < 1);
-        for (const h of s.honey) if (!h.falling) spawnParticles(s, h.x + h.w / 2, h.y + 1, 10, "spark", 0);
-        if (bossInHoney && boss.phase !== "waiting" && boss.phase !== "dead") {
-          boss.hp = Math.max(0, boss.hp - 35);
-          boss.hitFlash = 0.3;
-          s.toast = { text: "SPIKED!", timer: 1.4 };
-          if (boss.hp <= 0 && boss.phase !== "dead") {
-            boss.phase = "dead"; boss.timer = 0; s.hitStop = 0.25; s.won = true;
-            s.toast = { text: "BOSS DOWN!", timer: 4 };
-          }
-        } else {
-          s.toast = { text: "spikes hit nothing — trap him first!", timer: 1.4 };
-        }
-      }
-    } else if (!(near && input.interactHeld)) {
-      sr.pull = Math.max(0, sr.pull - dt * 1.5);
-    }
-  }
-
   // ---- boss ----
   updateBoss(s, input, dt);
 
@@ -1137,8 +1040,6 @@ function updateBoss(s: State, input: Input, dt: number) {
     }
     case "chase": {
       boss.faceDir = p.x < boss.x ? -1 : 1;
-      const inHoney = s.honey.some(h => !h.falling && boss.x + boss.w / 2 > h.x && boss.x - boss.w / 2 < h.x + h.w && Math.abs(boss.y - boss.h / 2 - h.y) < 1);
-      if (inHoney && rng(s) < 0.15) spawnParticles(s, boss.x, boss.y - boss.h / 2, 2, "puff", 40);
       // READABLE DODGE: only bullets entering his facing arc trigger it, after a
       // visible crouch telegraph. Bank shots off the mirrors arrive from behind.
       boss.dodgeTelegraph = Math.max(0, boss.dodgeTelegraph - dt);
@@ -1146,7 +1047,7 @@ function updateBoss(s: State, input: Input, dt: number) {
         boss.vx = -boss.faceDir * 11; // hop backward out of the shot line
         boss.dodgeCooldown = boss.hp < boss.maxHp * 0.4 ? 0.7 : 1.0;
       }
-      if (boss.dodgeCooldown <= 0 && boss.dodgeTelegraph <= 0 && !inHoney) {
+      if (boss.dodgeCooldown <= 0 && boss.dodgeTelegraph <= 0) {
         for (const b of s.bullets) {
           const toBossX = boss.x - b.x;
           // bullet is heading at the boss AND coming from the side he faces
@@ -1164,7 +1065,7 @@ function updateBoss(s: State, input: Input, dt: number) {
       // friction after dodge dash
       boss.vx *= Math.pow(0.05, dt);
       const enraged = boss.hp < boss.maxHp * 0.4;
-      const chaseV = ((enraged ? 5.6 : 4.6) + (s.grump ? 1.1 : 0)) * boss.faceDir * (inHoney ? 0.28 : 1);
+      const chaseV = ((enraged ? 5.6 : 4.6) + (s.grump ? 1.1 : 0)) * boss.faceDir;
       // PHASE 2: enraged, he uses your own trick — bouncing trunk-shots
       boss.spitCooldown -= dt;
       if (enraged && boss.spitCooldown <= 0) {
@@ -1185,7 +1086,7 @@ function updateBoss(s: State, input: Input, dt: number) {
       boss.x += (chaseV + boss.vx) * dt;
       // gravity/floor
       boss.y = Math.max(45.4 + boss.h / 2, boss.y - 10 * dt);
-      if (boss.leapCooldown <= 0 && dist > 3 && !inHoney) {
+      if (boss.leapCooldown <= 0 && dist > 3) {
         boss.phase = "leap"; boss.timer = 0;
         boss.vy = 11;
         // lead the target: aim where the player is heading

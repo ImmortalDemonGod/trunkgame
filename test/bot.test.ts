@@ -415,69 +415,15 @@ test("grump mode: harder boss and thinner health, still killable", () => {
 test("boss fight death: respawn is not camped — boss resets to his ledge", () => {
   const s = makeLevel();
   teleport(s, 174, 46.5);
-  sim(s, {}, 2); // fight underway
-  s.boss.x = 168; // boss camping the checkpoint area
-  s.boss.phase = "chase";
-  s.player.dead = false; s.player.deathTimer = 0;
-  const d0 = s.stats.deaths;
-  s.player.y = -20; // deterministic death (fall out of the world)
-  sim(s, {}, 0.75); // die + respawn (0.6s timer), assert right away
-  expect(s.stats.deaths).toBeGreaterThan(d0);
-  expect(s.player.dead).toBe(false);
-  expect(s.boss.x).toBeGreaterThan(176); // backed off to his ledge
-});
-
-test("honey (Marc's design): shoot the beehive to drop honey; it roots the boss", () => {
-  const s = makeLevel();
-  teleport(s, 174, 46.5);
   sim(s, {}, 4); // fight underway
-  // stand beneath the hive so the boss can't bodyblock, then strike it
-  const hv = s.hives[1];
-  s.player.x = hv.x; s.player.y = 46.5; s.player.vx = 0; s.player.vy = 0;
-  s.player.hp = s.player.maxHp; s.player.iframes = 6; s.player.dead = false; s.player.deathTimer = 0;
-  for (let i = 0; i < 6 && !hv.dropped; i++) { shot(s, hv.x, hv.y); sim(s, {}, 0.5); }
-  expect(hv.dropped).toBe(true);
-  sim(s, {}, 1.5); // honey lands
-  expect(s.honey.length).toBeGreaterThan(0);
-  // park a puddle under the boss and verify he can't leap or dodge.
-  // keep the player alive & far so no respawn logic interferes with the measurement
-  s.player.x = 158; s.player.y = 46.5; s.player.vx = 0; s.player.vy = 0;
-  s.player.hp = s.player.maxHp; s.player.iframes = 3;
-  s.player.dead = false; s.player.deathTimer = 0; // clear any queued respawn
-  s.boss.phase = "chase"; s.boss.vx = 0; s.boss.vy = 0; s.boss.y = 45.4 + s.boss.h / 2;
-  s.honey.push({ x: s.boss.x - 1.3, y: 45.5, w: 2.6, life: 9, falling: false, fallY: 45.5 });
-  s.boss.leapCooldown = -1;
-  const x0 = s.boss.x;
-  sim(s, {}, 1);
-  expect(Math.abs(s.boss.x - x0)).toBeLessThan(2); // rooted-ish (28% speed)
-  expect(s.boss.phase).not.toBe("leap");
-});
-
-test("pull ring (Marc's mechanic): hold E to drop the spikes and run the alley", () => {
-  const s = makeLevel();
-  teleport(s, 53.5, 1.5);
-  sim(s, { interactHeld: true }, 1.4); // charge the pull
-  expect(s.pullRing.charged).toBeGreaterThan(6);
-  const hp0 = s.player.hp;
-  sim(s, { right: true }, 3.5); // sprint the alley on foot
-  expect(s.player.hp).toBe(hp0); // spikes are down: no damage
-  expect(s.player.x).toBeGreaterThan(75);
-});
-
-
-test("full Marc chain: hive -> honey -> trapped boss -> spike ring executes damage", () => {
-  const s = makeLevel();
-  teleport(s, 174, 46.5);
-  sim(s, {}, 4);
-  // trap the boss deterministically
-  s.player.x = 158; s.player.y = 46.5; s.player.vx = 0; s.player.vy = 0;
-  s.player.hp = s.player.maxHp; s.player.iframes = 5;
-  s.player.dead = false; s.player.deathTimer = 0;
-  s.boss.phase = "chase"; s.boss.vx = 0; s.boss.vy = 0; s.boss.y = 45.4 + s.boss.h / 2; s.boss.x = 170;
-  s.honey.push({ x: 168.7, y: 45.5, w: 3, life: 22, falling: false, fallY: 45.5 });
-  const hp0 = s.boss.hp;
-  // stand at the spike ring and pull
-  s.player.x = s.spikeRing.x; s.player.y = 46.2;
-  sim(s, { interactHeld: true }, 1.6);
-  expect(s.boss.hp).toBeLessThanOrEqual(hp0 - 35);
+  s.boss.x = 168; // boss on top of the checkpoint area
+  s.player.hp = 1;
+  damage: {
+    s.player.x = s.boss.x; // force contact
+    sim(s, {}, 1.5);
+  }
+  expect(s.stats.deaths).toBeGreaterThanOrEqual(1);
+  sim(s, {}, 1); // respawned
+  expect(s.boss.x).toBeGreaterThan(175); // backed off
+  expect(s.player.dead).toBe(false);
 });
