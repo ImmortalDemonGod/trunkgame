@@ -169,6 +169,8 @@ mastery** (Downwell lineage).
 | GamePause.cs | pause | P key |
 | FollowCamera.cs (ours, from the fix night) | camera must not inherit player rotation | camera is code-only, lerp + look-ahead |
 | StickFront.cs | rig helper | n/a (no 3D rig) |
+| HoneyDrop.cs + BossStuckInHoney.cs + issue #40 brief *(Marc, July 14)* | strike beehive → honey drops → lure boss in → stuck (slow, no jump) | shootable beehives over the arena; trapped boss can't leap or dodge |
+| RingPull.cs *(Marc, July 14)* | trunk pulls a ring; spikes actuate | TWO uses: alley ring retracts spikes 8s (run it); arena ring SLAMS spikes into honey — 35 dmg to a trapped boss |
 
 ## Final fun audit (against the formula, with evidence)
 
